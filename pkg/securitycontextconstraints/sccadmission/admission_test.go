@@ -669,16 +669,16 @@ func TestAdmitFailure(t *testing.T) {
 	disallowedPriv.Spec.Containers[0].SecurityContext.Privileged = &priv
 
 	requestsHostNetwork := goodPod()
-	requestsHostNetwork.Spec.SecurityContext.HostNetwork = true
+	requestsHostNetwork.Spec.HostNetwork = true
 
 	requestsHostPorts := goodPod()
 	requestsHostPorts.Spec.Containers[0].Ports = []coreapi.ContainerPort{{HostPort: 1}}
 
 	requestsHostPID := goodPod()
-	requestsHostPID.Spec.SecurityContext.HostPID = true
+	requestsHostPID.Spec.HostPID = true
 
 	requestsHostIPC := goodPod()
-	requestsHostIPC.Spec.SecurityContext.HostIPC = true
+	requestsHostIPC.Spec.HostIPC = true
 
 	requestsSupplementalGroup := goodPod()
 	requestsSupplementalGroup.Spec.SecurityContext.SupplementalGroups = []int64{1}
@@ -2261,6 +2261,14 @@ func (s *sccTestAuthorizer) Authorize(ctx context.Context, a authorizer.Attribut
 	}
 
 	return authorizer.DecisionNoOpinion, "", nil
+}
+
+func (s *sccTestAuthorizer) ConditionsAwareAuthorize(ctx context.Context, a authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(s.Authorize(ctx, a))
+}
+
+func (s *sccTestAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
 }
 
 func isValidSCCAttributes(a authorizer.Attributes) bool {
